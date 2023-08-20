@@ -22,7 +22,7 @@ SOURCES = main.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_wgpu.cpp
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
-UNAME_S := $(shell uname -s)
+##UNAME_S := $(shell uname -s)
 CPPFLAGS =
 LDFLAGS =
 EMS =
@@ -79,7 +79,7 @@ $(WEB_DIR):
 	mkdir $@
 
 serve: all
-	python3 -m http.server -d $(WEB_DIR)
+	python -m http.server -d $(WEB_DIR)
 
 $(EXE): $(OBJS) $(WEB_DIR)
 	$(CXX) -o $@ $(OBJS) $(LDFLAGS)

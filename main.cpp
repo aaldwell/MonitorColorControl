@@ -249,7 +249,7 @@ static void MainLoopStep(void* window)
 			    ImGui::PopID();
 			}//endfor
 			ImGui::SameLine();
-			ImGui::Text("           PRESS SPACE BAR TO SHOW / HIDE OPTIONS UI");
+			ImGui::Text("           PRESS SPACE BAR TO SHOW / HIDE OPTIONS UI \n           F11 TO ENTER/EXIT FULL SCREEN MODE");
 
 			background_color = widget_selected_color;
 		}//end ImGUI Begin::

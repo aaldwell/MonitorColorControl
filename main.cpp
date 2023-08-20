@@ -127,8 +127,6 @@ static bool InitWGPU()
 
 static void MainLoopStep(void* window)
 {
-    ImGuiIO& io = ImGui::GetIO();
-
     glfwPollEvents();
 
     int width, height;
@@ -152,53 +150,111 @@ static void MainLoopStep(void* window)
         ImGui_ImplWGPU_CreateDeviceObjects();
     }
 
-    // Start the Dear ImGui frame
+    
+	 // Our state
+    const static ImVec2 WINDOW_SIZE = ImVec2(800.f, 600.f);
+    const static ImVec2 WINDOW_POS = ImVec2(20.f, 20.f);
+    static bool show_UI = true;
+    static bool temperature_mode = false;
+    static ImVec4 background_color = ImVec4(0.f, 0.f, 0.f, 1.f); //black
+
+    // Generate a default palette. The palette will persist and can be edited.
+    static bool saved_palette_init = true;
+    static ImVec4 saved_palette[32] = {};
+
+    if (saved_palette_init)
+    {
+        for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+        {
+            ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
+                saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+            saved_palette[n].w = 1.0f; // Alpha
+        }
+        saved_palette_init = false;
+    }
+   
+	// Start the Dear ImGui frame
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // Our state
-    // (we use static, which essentially makes the variable globals, as a convenience to keep the example code easy to follow)
-    static bool show_demo_window = true;
-    static bool show_another_window = false;
-    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    //Might want to bring back framerate display for testing later...
+		// ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+	//TODO: HDR Support
+	    //static bool hdr = false;
+		//ImGui::SetColorEditOptions(ImGuiColorEditFlags_HDR)
 
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (show_demo_window)
-        ImGui::ShowDemoWindow(&show_demo_window);
-
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+	//keyboard / input controls
+    if (ImGui::IsKeyPressed(ImGuiKey_Space))
     {
-        static float f = 0.0f;
-        static int counter = 0;
-
-        ImGui::Begin("Hello, world!");                                // Create a window called "Hello, world!" and append into it.
-
-        ImGui::Text("This is some useful text.");                     // Display some text (you can use a format strings too)
-        ImGui::Checkbox("Demo Window", &show_demo_window);            // Edit bools storing our window open/close state
-        ImGui::Checkbox("Another Window", &show_another_window);
-
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);                  // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("clear color", (float*)&clear_color);       // Edit 3 floats representing a color
-
-        if (ImGui::Button("Button"))                                  // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
-
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        ImGui::End();
+        show_UI = !show_UI;
     }
 
-    // 3. Show another simple window.
-    if (show_another_window)
+    if (show_UI)
     {
-        ImGui::Begin("Another Window", &show_another_window);         // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me"))
-            show_another_window = false;
-        ImGui::End();
-    }
+        static ImGuiWindowFlags widget_window_flags;
+        widget_window_flags |= ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove;
+        ImGui::Begin("OPTIONS", &show_UI, widget_window_flags);
+        {
+			static ImVec4 widget_selected_color = ImVec4(0.50f, 0.50f, 0.50f, 1.0f); //grey
+			ImGui::SetWindowSize(WINDOW_SIZE);
+			ImGui::SetWindowPos(WINDOW_POS);
+
+			ImGui::Text("OPTIONS");
+			ImGui::Separator();
+			ImGui::Checkbox("Temperature Mode", &temperature_mode);
+
+			float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
+			ImGui::SetNextItemWidth(w);
+			ImGuiColorEditFlags_ color_bar_mode = ImGuiColorEditFlags_PickerHueBar;
+			if (temperature_mode)
+			    color_bar_mode = ImGuiColorEditFlags_PickerTempsBar;
+
+			ImGui::ColorPicker3("##MyColor##5", (float*)&widget_selected_color, color_bar_mode | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+			if (!temperature_mode)
+			{
+			    ImGui::SameLine();
+			    ImGui::SetNextItemWidth(w);
+			    ImGui::ColorPicker3("##MyColor##6", (float*)&widget_selected_color, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+			}
+			
+			
+			ImGui::Spacing();
+			ImGui::ColorEdit4("HSV shown as RGB##1", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
+			ImGui::ColorEdit4("HSV shown as HSV##1", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
+			ImGui::ColorEdit4("Hex shown", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
+
+
+			ImGui::Text("Palette Presets");
+			for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+			{
+			    ImGui::PushID(n);
+			    if ((n % 8) != 0)
+			        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+
+			    ImGuiColorEditFlags palette_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip;
+			    if (ImGui::ColorButton("##palette", saved_palette[n], palette_button_flags, ImVec2(20, 20)))
+			        widget_selected_color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, widget_selected_color.w); // Preserve alpha!
+
+			    // Allow user to drop colors into each palette entry. Note that ColorButton() is already a
+			    // drag source by default, unless specifying the ImGuiColorEditFlags_NoDragDrop flag.
+			    if (ImGui::BeginDragDropTarget())
+			    {
+			        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+			            memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
+			        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
+			            memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 4);
+			        ImGui::EndDragDropTarget();
+			    }//endif
+			    ImGui::PopID();
+			}//endfor
+			ImGui::SameLine();
+			ImGui::Text("           PRESS SPACE BAR TO SHOW / HIDE OPTIONS UI");
+
+			background_color = widget_selected_color;
+		}//end ImGUI Begin::
+		ImGui::End();
+	}//endif: show_UI
 
     // Rendering
     ImGui::Render();
@@ -206,7 +262,7 @@ static void MainLoopStep(void* window)
     WGPURenderPassColorAttachment color_attachments = {};
     color_attachments.loadOp = WGPULoadOp_Clear;
     color_attachments.storeOp = WGPUStoreOp_Store;
-    color_attachments.clearValue = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
+    color_attachments.clearValue = { background_color.x * background_color.w, background_color.y * background_color.w, background_color.z * background_color.w, background_color.w };
     color_attachments.view = wgpuSwapChainGetCurrentTextureView(wgpu_swap_chain);
     WGPURenderPassDescriptor render_pass_desc = {};
     render_pass_desc.colorAttachmentCount = 1;
@@ -224,7 +280,7 @@ static void MainLoopStep(void* window)
     WGPUCommandBuffer cmd_buffer = wgpuCommandEncoderFinish(encoder, &cmd_buffer_desc);
     WGPUQueue queue = wgpuDeviceGetQueue(wgpu_device);
     wgpuQueueSubmit(queue, 1, &cmd_buffer);
-}
+}//end MainLoopStep
 
 static void print_glfw_error(int error, const char* description)
 {

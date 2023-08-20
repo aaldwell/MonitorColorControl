@@ -1,2 +1,12 @@
-# MonitorColorControl
-A simple web app to give you more control over the brightness and color of lighting your monitor casts. Useful for video conferencing and streaming with large monitors.
+# MonitorColorControl (MCC)
+A simple web app to give you total control over the brightness and color of lighting your screen background casts on your environment. Useful for video conferencing and streaming with large monitors when you want to have a more consistent lighting scenario. Also highly useful for correcting burn-in on LCD screens (set to fullscreen, full white, 8-24 hours), and inspecting your screen for any dead pixels.
+
+# How To Use
+A live version is currently hosted at: https://aaldwell.github.io/MonitorColorControl/build/
+Just set the color you want, hide the UI, enable fullscreen, and place your video chat app (such as Zoom) in front at whatever window size makes sense for you.
+
+# Disclaimer
+This project was created as a hackathon experiment. It relies heavily on Omar Cornut's imgui library (found here: https://github.com/ocornut ). The primary goals of this project were to ship one simple but useful thing in a single day, to experiment with and learn more about both WebGPU and emscripten, and to come away with a base I could build more on later for (eventually) running a 3D game in the browser.  It is in no way meant to serve as an example of proper team-friendly production code, best practices, or as a tutorial for anything.  This code is provided as-is without any promise of future support.  Seeing as the webGPU API is still very new and somewhat unstable, it's very possible that it could stop working at any point.  While I did my best to get it as polished as possible given the time constraint, this code may still contain bugs or security vulnerabilities, and throw compiler warnings.  Use at your own risk.
+
+# Compatibility and Browser Support
+The WebGPU API Implementation Status page ( https://github.com/gpuweb/gpuweb/wiki/Implementation-Status ) contains an up-to-date summary of current browser support. At the time of this writing, WebGPU (and therefore this project) runs on Chrome version 113 on Windows, Mac, and Chrome OS.  Android and Linux require Chrome/Edge Canary ( https://www.google.com/chrome/canary/ ), and the enabling of the WebGPU developer extension flags, accessible through chrome://flags. See the implementation status page for details regarding other browsers such as Safari or Firefox. 

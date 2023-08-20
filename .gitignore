@@ -1,0 +1,8 @@
+
+*.sln
+
+*.vcxproj
+
+*.filters
+
+MCC/MCC.vcxproj.user

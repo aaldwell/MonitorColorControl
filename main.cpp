@@ -20,12 +20,35 @@ static WGPUSurface   wgpu_surface = nullptr;
 static WGPUSwapChain wgpu_swap_chain = nullptr;
 static int           wgpu_swap_chain_width = 0;
 static int           wgpu_swap_chain_height = 0;
+static int canvas_width = 800;
+static int canvas_height = 600;
+static const char* window_title = "Monitor Color Control";
 
 // Forward declarations
 static void MainLoopStep(void* window);
 static bool InitWGPU();
 static void print_glfw_error(int error, const char* description);
 static void print_wgpu_error(WGPUErrorType error_type, const char* message, void*);
+
+//Dity Test Globals
+static float fb_size[2] = {0.f,0.f};
+static float io_d_size[2] = {0.f,0.f};
+static float io_fb_scale[2] = {0.f,0.f};
+static float lrtb[4] = { 0.f, 0.f, 0.f, 0.f};
+static ImDrawData* d_data = nullptr;
+
+
+//Inline Javascript functions for Emscripten to get the window size if it changes
+EM_JS(int, browser_get_width, (), {
+    const { width, height } = canvas.getBoundingClientRect();
+    return width;
+});
+
+EM_JS(int, browser_get_height, (), {
+    const { width, height } = canvas.getBoundingClientRect();
+    return height;
+});
+
 
 // Main code
 int main(int, char**)
@@ -36,8 +59,18 @@ int main(int, char**)
 
     // Make sure GLFW does not initialize any graphics context.
     // This needs to be done explicitly later.
+    canvas_width = browser_get_width(); 
+    canvas_height = browser_get_height();
+    if (canvas_width <= 0 || canvas_height <= 0)
+    {
+        glfwTerminate();
+        return 1;
+    }
+    
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+WebGPU example", nullptr, nullptr);
+    glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
+    GLFWwindow* window = glfwCreateWindow(canvas_width, canvas_height, window_title, nullptr, nullptr);
+    
     if (!window)
     {
         glfwTerminate();
@@ -67,7 +100,6 @@ int main(int, char**)
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOther(window, true);
@@ -125,29 +157,58 @@ static bool InitWGPU()
     return true;
 }
 
+//passing a nullptr here is allowed.  Returns a nullptr if creation was unsuccessful
+static void RemakeWindow(void* window, const int win_width, const int win_height, const char* title)
+{
+    GLFWwindow* p_win = (GLFWwindow*)window;
+    if (p_win)
+            glfwDestroyWindow(p_win);
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
+    GLFWwindow* new_window = glfwCreateWindow(win_width, win_height, title, nullptr, nullptr);
+    if (!new_window)
+    {
+        glfwTerminate();
+        window = nullptr;
+        return;
+    }
+
+    window = new_window;
+}
+
 static void MainLoopStep(void* window)
 {
     glfwPollEvents();
 
-    int width, height;
-    glfwGetFramebufferSize((GLFWwindow*)window, &width, &height);
+    //Detect Browser Window Resize
+    // was: glfwGetFramebufferSize((GLFWwindow*)window, &canvas_width, &canvas_height);
+    canvas_width = browser_get_width();
+    canvas_height = browser_get_height();
+   
 
     // React to changes in screen size
-    if (width != wgpu_swap_chain_width && height != wgpu_swap_chain_height)
+    if (canvas_width != wgpu_swap_chain_width || canvas_height != wgpu_swap_chain_height)
     {
         ImGui_ImplWGPU_InvalidateDeviceObjects();
         if (wgpu_swap_chain)
             wgpuSwapChainRelease(wgpu_swap_chain);
-        wgpu_swap_chain_width = width;
-        wgpu_swap_chain_height = height;
+        wgpu_swap_chain_width = canvas_width;
+        wgpu_swap_chain_height = canvas_height;
         WGPUSwapChainDescriptor swap_chain_desc = {};
         swap_chain_desc.usage = WGPUTextureUsage_RenderAttachment;
         swap_chain_desc.format = WGPUTextureFormat_RGBA8Unorm;
-        swap_chain_desc.width = width;
-        swap_chain_desc.height = height;
+        swap_chain_desc.width = canvas_width;
+        swap_chain_desc.height = canvas_height;
         swap_chain_desc.presentMode = WGPUPresentMode_Fifo;
         wgpu_swap_chain = wgpuDeviceCreateSwapChain(wgpu_device, wgpu_surface, &swap_chain_desc);
         ImGui_ImplWGPU_CreateDeviceObjects();
+
+        // Setup display size (every frame to accommodate for window resizing)
+        //Probably need to destroy and re-make the window....  glfwSetWindowSize either doesnt' seem to support any arbitrary size or won't update each frame
+        //glfwSetWindowSize((GLFWwindow*)window, canvas_width, canvas_height);
+        RemakeWindow(window, canvas_width, canvas_height, window_title);
+        IM_ASSERT(window != nullptr);
     }
 
     

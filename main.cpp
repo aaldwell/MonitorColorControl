@@ -30,15 +30,18 @@ static bool InitWGPU();
 static void print_glfw_error(int error, const char* description);
 static void print_wgpu_error(WGPUErrorType error_type, const char* message, void*);
 
+
 //Dity Test Globals
 static float fb_size[2] = {0.f,0.f};
 static float io_d_size[2] = {0.f,0.f};
 static float io_fb_scale[2] = {0.f,0.f};
 static float lrtb[4] = { 0.f, 0.f, 0.f, 0.f};
 static ImDrawData* d_data = nullptr;
+//TODO: make a helper function to convert float to const char * or char[];
+//snprintf(buffer, sizeof buffer, "%f", myFloat);
 
 
-//Inline Javascript functions for Emscripten to get the window size if it changes
+//Inline JaveScript functions for Emscripten
 EM_JS(int, browser_get_width, (), {
     const { width, height } = canvas.getBoundingClientRect();
     return width;
@@ -49,7 +52,6 @@ EM_JS(int, browser_get_height, (), {
     return height;
 });
 
-
 // Main code
 int main(int, char**)
 {
@@ -58,7 +60,9 @@ int main(int, char**)
         return 1;
 
     // Make sure GLFW does not initialize any graphics context.
-    // This needs to be done explicitly later.
+    // This needs to be done explicitly later
+
+    
     canvas_width = browser_get_width(); 
     canvas_height = browser_get_height();
     if (canvas_width <= 0 || canvas_height <= 0)
@@ -67,10 +71,10 @@ int main(int, char**)
         return 1;
     }
     
+
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
     GLFWwindow* window = glfwCreateWindow(canvas_width, canvas_height, window_title, nullptr, nullptr);
-    
     if (!window)
     {
         glfwTerminate();
@@ -179,6 +183,8 @@ static void RemakeWindow(void* window, const int win_width, const int win_height
 
 static void MainLoopStep(void* window)
 {
+    ImGuiIO& io = ImGui::GetIO();
+
     glfwPollEvents();
 
     //Detect Browser Window Resize
@@ -186,7 +192,6 @@ static void MainLoopStep(void* window)
     canvas_width = browser_get_width();
     canvas_height = browser_get_height();
    
-
     // React to changes in screen size
     if (canvas_width != wgpu_swap_chain_width || canvas_height != wgpu_swap_chain_height)
     {
@@ -211,18 +216,16 @@ static void MainLoopStep(void* window)
         IM_ASSERT(window != nullptr);
     }
 
-    
-	 // Our state
-    const static ImVec2 WINDOW_SIZE = ImVec2(800.f, 600.f);
-    const static ImVec2 WINDOW_POS = ImVec2(20.f, 20.f);
+    //States
     static bool show_UI = true;
     static bool temperature_mode = false;
     static ImVec4 background_color = ImVec4(0.f, 0.f, 0.f, 1.f); //black
+    const static ImVec2 WINDOW_SIZE = ImVec2(800.f, 600.f);
+    const static ImVec2 WINDOW_POS = ImVec2(20.f, 20.f);
 
     // Generate a default palette. The palette will persist and can be edited.
     static bool saved_palette_init = true;
     static ImVec4 saved_palette[32] = {};
-
     if (saved_palette_init)
     {
         for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
@@ -233,19 +236,65 @@ static void MainLoopStep(void* window)
         }
         saved_palette_init = false;
     }
-   
-	// Start the Dear ImGui frame
+
+
+    // Start the Dear ImGui frame
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    //Might want to bring back framerate display for testing later...
-		// ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-	//TODO: HDR Support
-	    //static bool hdr = false;
-		//ImGui::SetColorEditOptions(ImGuiColorEditFlags_HDR)
+    //Window Size Testing Window
+///---------------------------------------------------------------------------------------------------------
+    {
+        ImGui::Begin("Responsive Window Testing");
 
-	//keyboard / input controls
+        float floatfbw = (float)canvas_width;
+        float floatfbh = (float)canvas_height;
+        fb_size[0] = floatfbw; fb_size[1] = floatfbh;
+        ImGui::InputFloat2("Browser Canvas Size", fb_size);
+
+        int w_size_w, w_size_h;
+        glfwGetWindowSize((GLFWwindow*)window, &w_size_w, &w_size_h);
+        float win_size[2] = {(float)w_size_w, (float)w_size_h};
+        ImGui::InputFloat2("GLFW Window Size", win_size);
+        
+        int glfw_fb_w, glfw_fb_h;
+        glfwGetFramebufferSize((GLFWwindow*)window, &glfw_fb_w, &glfw_fb_h);
+        float glfw_fb_size[2] = {(float)glfw_fb_w, (float)glfw_fb_h};
+        ImGui::InputFloat2("GLFW Framebuffer Size", glfw_fb_size);
+
+        io_d_size[0] = io.DisplaySize.x; io_d_size[1] = io.DisplaySize.y;
+        ImGui::InputFloat2("ImGUI IO Display Size", io_d_size);
+
+        io_fb_scale[0] = io.DisplayFramebufferScale.x; io_fb_scale[1] = io.DisplayFramebufferScale.y;
+        ImGui::InputFloat2("ImGUI IO FB Scale", io_fb_scale);
+
+        
+        if (d_data != nullptr)
+        {
+            float L = d_data->DisplayPos.x;
+            float R = d_data->DisplayPos.x + d_data->DisplaySize.x;
+            float T = d_data->DisplayPos.y;
+            float B = d_data->DisplayPos.y + d_data->DisplaySize.y;
+
+            lrtb[0] = L;
+            lrtb[1] = R;
+            lrtb[2] = T;
+            lrtb[3] = B;
+            ImGui::InputFloat4("Draw Data LRTB", lrtb);
+        }
+        
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        ImGui::End();
+    }
+///---------------------------------------------------------------------------------------------------------
+
+    ImGui::SetNextWindowSize(WINDOW_SIZE);
+	ImGui::SetNextWindowPos(WINDOW_POS);
+
+    //Color Control Window
+///---------------------------------------------------------------------------------------------------------
+    //keyboard / input controls
     if (ImGui::IsKeyPressed(ImGuiKey_Space))
     {
         show_UI = !show_UI;
@@ -253,13 +302,11 @@ static void MainLoopStep(void* window)
 
     if (show_UI)
     {
-        static ImGuiWindowFlags widget_window_flags;
-        widget_window_flags |= ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove;
-        ImGui::Begin("OPTIONS", &show_UI, widget_window_flags);
+        //static ImGuiWindowFlags widget_window_flags;
+        //widget_window_flags |= ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove;
+        ImGui::Begin("OPTIONS", &show_UI);// widget_window_flags);
         {
 			static ImVec4 widget_selected_color = ImVec4(0.50f, 0.50f, 0.50f, 1.0f); //grey
-			ImGui::SetWindowSize(WINDOW_SIZE);
-			ImGui::SetWindowPos(WINDOW_POS);
 
 			ImGui::Text("OPTIONS");
 			ImGui::Separator();
@@ -315,7 +362,9 @@ static void MainLoopStep(void* window)
 			background_color = widget_selected_color;
 		}//end ImGUI Begin::
 		ImGui::End();
-	}//endif: show_UI
+	}//endif: show_Controls
+    
+///---------------------------------------------------------------------------------------------------------
 
     // Rendering
     ImGui::Render();
@@ -334,6 +383,12 @@ static void MainLoopStep(void* window)
     WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(wgpu_device, &enc_desc);
 
     WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &render_pass_desc);
+
+
+    //Get draw data to show on the next frame
+    d_data = ImGui::GetDrawData();
+
+
     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), pass);
     wgpuRenderPassEncoderEnd(pass);
 
@@ -341,7 +396,8 @@ static void MainLoopStep(void* window)
     WGPUCommandBuffer cmd_buffer = wgpuCommandEncoderFinish(encoder, &cmd_buffer_desc);
     WGPUQueue queue = wgpuDeviceGetQueue(wgpu_device);
     wgpuQueueSubmit(queue, 1, &cmd_buffer);
-}//end MainLoopStep
+
+}//endMainLoop
 
 static void print_glfw_error(int error, const char* description)
 {

@@ -6,3 +6,9 @@
 *.filters
 
 MCC/MCC.vcxproj.user
+
+build/index.js
+
+build/index.wasm
+
+*.o

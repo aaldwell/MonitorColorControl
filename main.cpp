@@ -73,7 +73,7 @@ int main(int, char**)
     
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
+    //glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
     GLFWwindow* window = glfwCreateWindow(canvas_width, canvas_height, window_title, nullptr, nullptr);
     if (!window)
     {
@@ -169,7 +169,7 @@ static void RemakeWindow(void* window, const int win_width, const int win_height
             glfwDestroyWindow(p_win);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
+    //glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
     GLFWwindow* new_window = glfwCreateWindow(win_width, win_height, title, nullptr, nullptr);
     if (!new_window)
     {
@@ -185,10 +185,8 @@ static void MainLoopStep(void* window)
 {
     ImGuiIO& io = ImGui::GetIO();
 
+    //Detect Browser Events
     glfwPollEvents();
-
-    //Detect Browser Window Resize
-    // was: glfwGetFramebufferSize((GLFWwindow*)window, &canvas_width, &canvas_height);
     canvas_width = browser_get_width();
     canvas_height = browser_get_height();
    
@@ -211,8 +209,8 @@ static void MainLoopStep(void* window)
 
         // Setup display size (every frame to accommodate for window resizing)
         //Probably need to destroy and re-make the window....  glfwSetWindowSize either doesnt' seem to support any arbitrary size or won't update each frame
-        //glfwSetWindowSize((GLFWwindow*)window, canvas_width, canvas_height);
-        RemakeWindow(window, canvas_width, canvas_height, window_title);
+        glfwSetWindowSize((GLFWwindow*)window, canvas_width, canvas_height);
+        //RemakeWindow(window, canvas_width, canvas_height, window_title);
         IM_ASSERT(window != nullptr);
     }
 
@@ -221,7 +219,7 @@ static void MainLoopStep(void* window)
     static bool temperature_mode = false;
     static ImVec4 background_color = ImVec4(0.f, 0.f, 0.f, 1.f); //black
     const static ImVec2 WINDOW_SIZE = ImVec2(800.f, 600.f);
-    const static ImVec2 WINDOW_POS = ImVec2(20.f, 20.f);
+    const static ImVec2 WINDOW_POS = ImVec2(20.f, 200.f);
 
     // Generate a default palette. The palette will persist and can be edited.
     static bool saved_palette_init = true;

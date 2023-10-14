@@ -161,26 +161,6 @@ static bool InitWGPU()
     return true;
 }
 
-//passing a nullptr here is allowed.  Returns a nullptr if creation was unsuccessful
-static void RemakeWindow(void* window, const int win_width, const int win_height, const char* title)
-{
-    GLFWwindow* p_win = (GLFWwindow*)window;
-    if (p_win)
-            glfwDestroyWindow(p_win);
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    //glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
-    GLFWwindow* new_window = glfwCreateWindow(win_width, win_height, title, nullptr, nullptr);
-    if (!new_window)
-    {
-        glfwTerminate();
-        window = nullptr;
-        return;
-    }
-
-    window = new_window;
-}
-
 static void MainLoopStep(void* window)
 {
     ImGuiIO& io = ImGui::GetIO();

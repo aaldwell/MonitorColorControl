@@ -200,7 +200,7 @@ static void MainLoopStep(void* window)
     static bool temperature_mode = false;
     static ImVec4 background_color = ImVec4(0.f, 0.f, 0.f, 1.f); //black
     const static ImVec2 WINDOW_SIZE = ImVec2(800.f, 600.f);
-    const static ImVec2 WINDOW_POS = ImVec2(20.f, 20.f);
+    //const static ImVec2 WINDOW_POS = ImVec2(20.f, 20.f); //disable warning until I work on this again
 
     // Generate a default palette. The palette will persist and can be edited.
     static bool saved_palette_init = true;

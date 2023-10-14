@@ -31,7 +31,7 @@ static void print_glfw_error(int error, const char* description);
 static void print_wgpu_error(WGPUErrorType error_type, const char* message, void*);
 
 
-//Dity Test Globals
+//Dirty Test Globals
 static float fb_size[2] = {0.f,0.f};
 static float io_d_size[2] = {0.f,0.f};
 static float io_fb_scale[2] = {0.f,0.f};
@@ -216,6 +216,7 @@ static void MainLoopStep(void* window)
 
     //States
     static bool show_UI = true;
+    static bool show_debug_UI = false;
     static bool temperature_mode = false;
     static ImVec4 background_color = ImVec4(0.f, 0.f, 0.f, 1.f); //black
     const static ImVec2 WINDOW_SIZE = ImVec2(800.f, 600.f);
@@ -241,8 +242,22 @@ static void MainLoopStep(void* window)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    //Window Size Testing Window
+    //Input Polling
 ///---------------------------------------------------------------------------------------------------------
+    //Color Controls
+    if (ImGui::IsKeyPressed(ImGuiKey_Space))
+    {
+        show_UI = !show_UI;
+    }
+    //Window / Framebuffer Size Debugging
+    if (ImGui::IsKeyPressed(ImGuiKey_Home))
+    {
+        show_debug_UI = !show_debug_UI;
+    }
+
+    //Debug Window
+///---------------------------------------------------------------------------------------------------------
+    if (show_debug_UI)
     {
         ImGui::Begin("Responsive Window Testing");
 
@@ -287,16 +302,10 @@ static void MainLoopStep(void* window)
     }
 ///---------------------------------------------------------------------------------------------------------
 
-    ImGui::SetNextWindowSize(WINDOW_SIZE);
-	ImGui::SetNextWindowPos(WINDOW_POS);
-
     //Color Control Window
 ///---------------------------------------------------------------------------------------------------------
-    //keyboard / input controls
-    if (ImGui::IsKeyPressed(ImGuiKey_Space))
-    {
-        show_UI = !show_UI;
-    }
+    ImGui::SetNextWindowSize(WINDOW_SIZE);
+    ImGui::SetNextWindowPos(WINDOW_POS);
 
     if (show_UI)
     {

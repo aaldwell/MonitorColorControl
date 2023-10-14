@@ -14,3 +14,7 @@ build/index.wasm
 *.o
 
 serve.ps1
+
+clean.ps1
+
+rebuild_and_run.ps1

@@ -197,7 +197,16 @@ static void MainLoopStep(void* window)
     //States
     static bool show_UI = true;
     static bool show_debug_UI = false;
-    static bool temperature_mode = false;
+    
+    enum e_tools_modes
+    {
+        toolmode_rgb = 0,
+        toolmode_hsv,
+        toolmode_temperature,
+        num_modes
+    };
+    static int tools_mode = e_tools_modes::toolmode_rgb;
+
     static ImVec4 background_color = ImVec4(0.f, 0.f, 0.f, 1.f); //black
     const static ImVec2 WINDOW_SIZE = ImVec2(800.f, 600.f);
     //const static ImVec2 WINDOW_POS = ImVec2(20.f, 20.f); //disable warning until I work on this again
@@ -297,30 +306,49 @@ static void MainLoopStep(void* window)
 
 			ImGui::Text("OPTIONS");
 			ImGui::Separator();
-			ImGui::Checkbox("Temperature Mode", &temperature_mode);
+			
+            if (ImGui::RadioButton("RGB Mode", tools_mode == e_tools_modes::toolmode_rgb)) { tools_mode = e_tools_modes::toolmode_rgb; } ImGui::SameLine();
+            if (ImGui::RadioButton("HSV Mode", tools_mode  == e_tools_modes::toolmode_hsv)) { tools_mode = e_tools_modes::toolmode_hsv; } ImGui::SameLine();
+            if (ImGui::RadioButton("Temperature Mode", tools_mode == e_tools_modes::toolmode_temperature)) { tools_mode = e_tools_modes::toolmode_temperature; };
+            ImGui::Text("current mode: %d", tools_mode);
 
 			float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
 			ImGui::SetNextItemWidth(w);
 			ImGuiColorEditFlags_ color_bar_mode = ImGuiColorEditFlags_PickerHueBar;
-			if (temperature_mode)
-			    color_bar_mode = ImGuiColorEditFlags_PickerTempsBar;
-
-			ImGui::ColorPicker3("##MyColor##5", (float*)&widget_selected_color, color_bar_mode | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
-			if (!temperature_mode)
-			{
-			    ImGui::SameLine();
-			    ImGui::SetNextItemWidth(w);
-			    ImGui::ColorPicker3("##MyColor##6", (float*)&widget_selected_color, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
-			}
 			
+            switch(tools_mode)
+            {   
+                case e_tools_modes::toolmode_hsv:
+                {
+                    ImGui::ColorPicker3("##MyColor##6", (float*)&widget_selected_color, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+                    ImGui::Spacing();
+                    ImGui::ColorEdit4("HSV Values", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
+                }break;
+
+                case e_tools_modes::toolmode_temperature:
+                {
+                     color_bar_mode = ImGuiColorEditFlags_PickerTempsBar;
+                     ImGui::ColorPicker3("##MyColor##5", (float*)&widget_selected_color, color_bar_mode | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+                     ImGui::Spacing();
+                     ImGui::ColorEdit4("RGB Values", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
+                }break;
+                
+                default:
+                case e_tools_modes::toolmode_rgb:
+                {
+                    ImGui::ColorPicker3("##MyColor##5", (float*)&widget_selected_color, color_bar_mode | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+                    ImGui::Spacing();
+                    ImGui::ColorEdit4("RGB Values", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
+                }
+            }
 			
 			ImGui::Spacing();
-			ImGui::ColorEdit4("HSV shown as RGB##1", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
-			ImGui::ColorEdit4("HSV shown as HSV##1", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
-			ImGui::ColorEdit4("Hex shown", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
+			ImGui::ColorEdit4("Hex Code", (float*)&widget_selected_color, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoPicker);
 
 
-			ImGui::Text("Palette Presets");
+		//Removing for now : Pallette
+        /*
+            ImGui::Text("Palette Presets");
 			for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
 			{
 			    ImGui::PushID(n);
@@ -344,6 +372,7 @@ static void MainLoopStep(void* window)
 			    ImGui::PopID();
 			}//endfor
 			ImGui::SameLine();
+            */
 			ImGui::Text("           PRESS SPACE BAR TO SHOW / HIDE OPTIONS UI \n           F11 TO ENTER/EXIT FULL SCREEN MODE");
 
 			background_color = widget_selected_color;
